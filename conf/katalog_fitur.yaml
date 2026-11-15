@@ -1,0 +1,231 @@
+# Katalog Fitur Kredit Sumatera (16 NUMERIK + 3 KATEGORIK = 19 fitur)
+
+# === FITUR NUMERIK ===
+usia:
+  entitas: nasabah_id
+  tipe: int64
+  deskripsi: Usia pemohon dalam tahun pada tanggal pengajuan kredit.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null # dihitung langsung saat pengajuan masuk
+  nilai_hilang: tolak # wajib ada untuk verifikasi kelayakan usia [17, 75]
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+tanggungan:
+  entitas: nasabah_id
+  tipe: int64
+  deskripsi: Jumlah anggota keluarga yang menjadi tanggungan finansial pemohon.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: median_latih # aman diimputasi dengan median populasi pemohon
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+lama_usaha_tahun:
+  entitas: nasabah_id
+  tipe: float64
+  deskripsi: Lama usaha atau masa kerja pemohon dalam satuan tahun.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: median_latih # mencegah bias terhadap pemohon baru tanpa catatan lama kerja
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+penghasilan_bulanan:
+  entitas: nasabah_id
+  tipe: float64
+  deskripsi: Penghasilan bersih bulanan yang dilaporkan pemohon dalam Rupiah.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # komponen utama rasio kemampuan bayar, tidak boleh ditebak
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+ragam_penghasilan:
+  entitas: nasabah_id
+  tipe: float64
+  deskripsi: Koefisien variasi atau tingkat fluktuasi penghasilan bulanan dalam 6 bulan terakhir.
+  sumber: dwh.arus_kas_nasabah
+  jendela_waktu: 180d
+  kesegaran_maks: 24h # diperbarui harian via batch; lebih dari 24 jam berisiko basi
+  nilai_hilang: median_latih # bukan nol karena nol berarti penghasilan sangat stabil
+  pola_sinkronisasi: batch
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+plafon_diajukan:
+  entitas: pengajuan_id
+  tipe: float64
+  deskripsi: Nominal pokok pinjaman yang diajukan pemohon dalam Rupiah.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # parameter wajib kontrak kredit
+  pola_sinkronisasi: on_demand
+  pemilik: tim-produk-kredit
+  versi: 1
+
+tenor_bulan:
+  entitas: pengajuan_id
+  tipe: int64
+  deskripsi: Jangka waktu pelunasan pinjaman dalam satuan bulan.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # parameter wajib kontrak kredit
+  pola_sinkronisasi: on_demand
+  pemilik: tim-produk-kredit
+  versi: 1
+
+bunga_tahunan:
+  entitas: pengajuan_id
+  tipe: float64
+  deskripsi: Suku bunga efektif tahunan yang ditawarkan untuk produk pinjaman.
+  sumber: sistem_harga_kredit
+  jendela_waktu: null
+  kesegaran_maks: 1h # mengikuti perubahan kebijakan suku bunga harian
+  nilai_hilang: tolak # wajib untuk menghitung kewajiban angsuran
+  pola_sinkronisasi: on_demand
+  pemilik: tim-produk-kredit
+  versi: 1
+
+angsuran_bulanan:
+  entitas: pengajuan_id
+  tipe: float64
+  deskripsi: Besaran cicilan pokok dan bunga per bulan dalam Rupiah.
+  sumber: sistem_harga_kredit
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # komponen pembilang pada rasio_angsuran
+  pola_sinkronisasi: on_demand
+  pemilik: tim-produk-kredit
+  versi: 1
+
+rata_saldo_90h:
+  entitas: nasabah_id
+  tipe: float64
+  deskripsi: Rata-rata saldo harian rekening tabungan utama selama 90 hari kalender sebelum tanggal pengajuan.
+  sumber: dwh.saldo_harian
+  jendela_waktu: 90d
+  kesegaran_maks: 24h # nilai online dianggap basi setelah 24 jam
+  nilai_hilang: median_latih # bukan nol karena nol adalah saldo rekening yang sah
+  pola_sinkronisasi: batch
+  pemilik: tim-risiko-kredit
+  versi: 2
+
+jumlah_tunggakan_12b:
+  entitas: nasabah_id
+  tipe: int64
+  deskripsi: Frekuensi keterlambatan pembayaran kewajiban kredit dalam 12 bulan terakhir (-1 jika tanpa riwayat biro).
+  sumber: dwh.biro_kredit
+  jendela_waktu: 365d
+  kesegaran_maks: 24h # disinkronkan harian dari agregasi biro kredit
+  nilai_hilang: median_latih # nilai -1 sudah merepresentasikan nasabah tanpa riwayat biro
+  pola_sinkronisasi: batch
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+rasio_angsuran:
+  entitas: pengajuan_id
+  tipe: float64
+  deskripsi: Fitur turunan stateless berupa angsuran_bulanan dibagi penghasilan_bulanan.
+  sumber: turunan_stateless
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # tanpa rasio ini permohonan tidak dapat dinilai
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+saldo_per_angsuran:
+  entitas: pengajuan_id
+  tipe: float64
+  deskripsi: Fitur turunan stateless berupa rata_saldo_90h dibagi angsuran_bulanan sebagai indikator bantalan likuiditas.
+  sumber: turunan_stateless
+  jendela_waktu: 90d
+  kesegaran_maks: 24h # bergantung pada kesegaran rata_saldo_90h dari lapis batch
+  nilai_hilang: median_latih # mengikuti kebijakan imputasi rata_saldo_90h
+  pola_sinkronisasi: hybrid
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+log_penghasilan:
+  entitas: nasabah_id
+  tipe: float64
+  deskripsi: Fitur turunan stateless berupa transformasi log1p(penghasilan_bulanan) untuk meredam kemencengan distribusi.
+  sumber: turunan_stateless
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # mengikuti syarat penghasilan_bulanan
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+tenor_panjang:
+  entitas: pengajuan_id
+  tipe: int64
+  deskripsi: Indikator biner stateless bernilai 1 jika tenor_bulan >= 36 bulan, dan 0 jika di bawahnya.
+  sumber: turunan_stateless
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: tolak # mengikuti syarat tenor_bulan
+  pola_sinkronisasi: on_demand
+  pemilik: tim-produk-kredit
+  versi: 1
+
+tanpa_riwayat_biro:
+  entitas: nasabah_id
+  tipe: int64
+  deskripsi: Indikator biner stateless bernilai 1 jika jumlah_tunggakan_12b < 0 (nasabah thin-file).
+  sumber: turunan_stateless
+  jendela_waktu: 365d
+  kesegaran_maks: 24h # mengikuti kesegaran jumlah_tunggakan_12b
+  nilai_hilang: median_latih # mengikuti kebijakan jumlah_tunggakan_12b
+  pola_sinkronisasi: batch
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+# === FITUR KATEGORIK ===
+segmen:
+  entitas: nasabah_id
+  tipe: string
+  deskripsi: Klasifikasi pekerjaan atau sumber penghasilan utama pemohon (pegawai_tetap, wiraswasta, pedagang_musiman, petani, nelayan).
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: kategori_tidak_dikenal # dikodekan menjadi semua 0 pada one-hot artefak tanpa gagal
+  pola_sinkronisasi: on_demand
+  pemilik: tim-risiko-kredit
+  versi: 1
+
+wilayah:
+  entitas: nasabah_id
+  tipe: string
+  deskripsi: Provinsi atau wilayah operasional pengajuan kredit di Pulau Sumatera.
+  sumber: formulir_pengajuan
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: kategori_tidak_dikenal # aman karena one-hot encoding mengabaikan kategori baru
+  pola_sinkronisasi: on_demand
+  pemilik: tim-operasional
+  versi: 1
+
+kanal:
+  entitas: pengajuan_id
+  tipe: string
+  deskripsi: Saluran masuknya pengajuan kredit (cabang, agen, daring).
+  sumber: sistem_akuisi
+  jendela_waktu: null
+  kesegaran_maks: null
+  nilai_hilang: kategori_tidak_dikenal # dikodekan menjadi vektor nol jika tidak tercatat
+  pola_sinkronisasi: on_demand
+  pemilik: tim-operasional
+  versi: 1
