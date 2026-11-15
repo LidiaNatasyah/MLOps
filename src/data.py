@@ -30,7 +30,6 @@ RENTANG = {
     "bunga_tahunan": (0.05, 0.40),
     "ragam_penghasilan": (0.0, 1.0),
     "gagal_bayar": (0, 1),
-    "jumlah_tunggakan_12b": (0, 12),
 }
 
 MAKS_HILANG = {
