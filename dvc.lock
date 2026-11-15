@@ -77,3 +77,24 @@ stages:
       hash: md5
       md5: 0b1ff25b85ef8e3c3f8f8a983e3cb2a5
       size: 459
+  laporan:
+    cmd: python src/laporan.py --metadata artifacts/metadata.json --segmen 
+      artifacts/metrik_segmen.csv --keluaran laporan/ringkasan_metrik.md
+    deps:
+    - path: artifacts/metadata.json
+      hash: md5
+      md5: c99a51dc6a699cfe3539cb25480b3f9f
+      size: 2297
+    - path: artifacts/metrik_segmen.csv
+      hash: md5
+      md5: 0648cfc54a48144a82ea7b763d4e3b2a
+      size: 303
+    - path: src/laporan.py
+      hash: md5
+      md5: b48cd7c47693de72c71087da89c3c2ad
+      size: 2537
+    outs:
+    - path: laporan/ringkasan_metrik.md
+      hash: md5
+      md5: 0ad3fd8f7c9bcfc2351a05f221857bd1
+      size: 1161

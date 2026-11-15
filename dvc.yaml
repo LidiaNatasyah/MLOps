@@ -29,3 +29,11 @@ stages:
     outs:
       - laporan/drift.csv
       - laporan/keadilan.csv
+  laporan:
+    cmd: python src/laporan.py --metadata artifacts/metadata.json --segmen artifacts/metrik_segmen.csv --keluaran laporan/ringkasan_metrik.md
+    deps:
+      - src/laporan.py
+      - artifacts/metadata.json
+      - artifacts/metrik_segmen.csv
+    outs:
+      - laporan/ringkasan_metrik.md
