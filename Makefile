@@ -3,7 +3,7 @@
 data:
 	python buat_dataset.py --keluaran data/raw --seed 42
 
-latih:
+latih:data
 	python src/train.py --config conf/params.yaml --keluaran artifacts
 
 uji:
