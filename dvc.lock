@@ -1,0 +1,79 @@
+schema: '2.0'
+stages:
+  bangkitkan:
+    cmd: python buat_dataset.py --keluaran data/raw --seed 42
+    deps:
+    - path: buat_dataset.py
+      hash: md5
+      md5: 4ab8e304d08ffc6740add5fb2e09734a
+      size: 7135
+    outs:
+    - path: data/raw/kredit_sumatera.csv
+      hash: md5
+      md5: 03926bd0c6fb9f84df93a5fa002d8276
+      size: 4364195
+  latih:
+    cmd: python src/train.py --config conf/params.yaml --keluaran artifacts
+    deps:
+    - path: conf/params.yaml
+      hash: md5
+      md5: acb95bc0f2ff28577e7255f3e5d4e1c2
+      size: 558
+    - path: data/raw/kredit_sumatera.csv
+      hash: md5
+      md5: 03926bd0c6fb9f84df93a5fa002d8276
+      size: 4364195
+    - path: src/data.py
+      hash: md5
+      md5: fbbc6082060604471ce9542541ae49ff
+      size: 3871
+    - path: src/evaluate.py
+      hash: md5
+      md5: 2f0b02517eed870633c1b9297e054f4e
+      size: 3009
+    - path: src/features.py
+      hash: md5
+      md5: 9eb7c722a6fab42e248f10c9036963dd
+      size: 3752
+    - path: src/train.py
+      hash: md5
+      md5: f9a7bb66f023ecda304ffb65f1181cb9
+      size: 4975
+    outs:
+    - path: artifacts/artefak_fitur.json
+      hash: md5
+      md5: 7efea4c67d62ad05b34128d39a7d273a
+      size: 932
+    - path: artifacts/metadata.json
+      hash: md5
+      md5: c99a51dc6a699cfe3539cb25480b3f9f
+      size: 2297
+    - path: artifacts/model.joblib
+      hash: md5
+      md5: 09cf7467595ca32cd5cad65435338a59
+      size: 175536
+  pantau:
+    cmd: python src/monitor.py --config conf/params.yaml --artefak artifacts 
+      --keluaran laporan
+    deps:
+    - path: artifacts/model.joblib
+      hash: md5
+      md5: 09cf7467595ca32cd5cad65435338a59
+      size: 175536
+    - path: data/raw/kredit_sumatera.csv
+      hash: md5
+      md5: 03926bd0c6fb9f84df93a5fa002d8276
+      size: 4364195
+    - path: src/monitor.py
+      hash: md5
+      md5: 7abf6cd5b59ccf311bb7fed1557070f1
+      size: 5416
+    outs:
+    - path: laporan/drift.csv
+      hash: md5
+      md5: 8180d2da72dba7cbee5f89a768aede87
+      size: 888
+    - path: laporan/keadilan.csv
+      hash: md5
+      md5: 0b1ff25b85ef8e3c3f8f8a983e3cb2a5
+      size: 459
